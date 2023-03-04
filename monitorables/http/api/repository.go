@@ -4,10 +4,11 @@ package api
 
 import (
 	"github.com/monitoror/monitoror/monitorables/http/api/models"
+	"net/http"
 )
 
 type (
 	Repository interface {
-		Get(url string) (*models.Response, error)
+		Get(req *http.Request) (*models.Response, error)
 	}
 )

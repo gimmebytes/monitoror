@@ -1,11 +1,14 @@
-//+build !faker
+//go:build !faker
+// +build !faker
 
 package usecase
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
@@ -59,7 +62,7 @@ func (hu *httpUsecase) httpAll(tileType coreModels.TileType, params models.Gener
 	tile.Status = coreModels.SuccessStatus
 
 	// Download page
-	response, err := hu.get(params.GetURL())
+	response, err := hu.get(params)
 	if err != nil {
 		return nil, &coreModels.MonitororError{Err: err, Tile: tile, Message: fmt.Sprintf("unable to get %s", params.GetURL())}
 	}
@@ -141,8 +144,10 @@ func (hu *httpUsecase) httpAll(tileType coreModels.TileType, params models.Gener
 }
 
 // Adding cache to Repository.Get
-func (hu *httpUsecase) get(url string) (*models.Response, error) {
+func (hu *httpUsecase) get(params models.GenericParamsProvider) (*models.Response, error) {
 	response := &models.Response{}
+
+	var url string = params.GetURL()
 
 	// Lookup in cache
 	key := fmt.Sprintf("%s:%s", coreModels.UpstreamStoreKeyPrefix, url)
@@ -151,8 +156,17 @@ func (hu *httpUsecase) get(url string) (*models.Response, error) {
 		return response, nil
 	}
 
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+
+	// add aditional headers here :-)
+	u, p := params.GetBasicAuth()
+
+	if len(u) > 0 && len(p) > 0 {
+		req.Header.Add("Authorization", "Basic "+basicAuth(u, p))
+	}
+
 	// Download page
-	response, err := hu.repository.Get(url)
+	response, err = hu.repository.Get(req)
 	if err != nil {
 		return nil, err
 	}
@@ -161,6 +175,11 @@ func (hu *httpUsecase) get(url string) (*models.Response, error) {
 	_ = hu.store.Set(key, *response, time.Millisecond*time.Duration(hu.cacheExpiration))
 
 	return response, nil
+}
+
+func basicAuth(username, password string) string {
+	auth := username + ":" + password
+	return base64.StdEncoding.EncodeToString([]byte(auth))
 }
 
 // checkStatusCode check if status code is between min / max

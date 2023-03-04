@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/monitoror/monitoror/monitorables/http/api"
 	"github.com/monitoror/monitoror/monitorables/http/api/models"
 	"github.com/monitoror/monitoror/monitorables/http/config"
 )
@@ -17,7 +16,7 @@ type (
 	}
 )
 
-func NewHTTPRepository(config *config.HTTP) api.Repository {
+func NewHTTPRepository(config *config.HTTP) *httpRepository {
 	var certificates []tls.Certificate
 
 	if config.Certificate != "" && config.Key != "" {
@@ -36,8 +35,8 @@ func NewHTTPRepository(config *config.HTTP) api.Repository {
 	return &httpRepository{client}
 }
 
-func (r *httpRepository) Get(url string) (response *models.Response, err error) {
-	resp, err := r.httpClient.Get(url)
+func (r *httpRepository) Get(req *http.Request) (response *models.Response, err error) {
+	resp, err := r.httpClient.Do(req)
 	if err != nil {
 		return
 	}

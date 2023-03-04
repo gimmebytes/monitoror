@@ -1,4 +1,5 @@
-//+build !faker
+//go:build !faker
+// +build !faker
 
 package models
 
@@ -14,8 +15,14 @@ type (
 		Regex         string `json:"regex,omitempty" query:"regex" validate:"regex"`
 		StatusCodeMin *int   `json:"statusCodeMin,omitempty" query:"statusCodeMin"`
 		StatusCodeMax *int   `json:"statusCodeMax,omitempty" query:"statusCodeMax"`
+		Username      string `json:"username" query:"username"`
+		Password      string `json:"password" query:"password"`
 	}
 )
+
+func (p *HTTPRawParams) GetBasicAuth() (username string, password string) {
+	return p.Username, p.Password
+}
 
 func (p *HTTPRawParams) Validate() []validator.Error {
 	return validateStatusCode(p)
