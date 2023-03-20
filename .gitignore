@@ -11,3 +11,9 @@ coverage.html
 # Config
 .env
 config.json
+
+# GoLand specific files
+.idea/
+
+# Yarn lock
+ui/yarn.lock
